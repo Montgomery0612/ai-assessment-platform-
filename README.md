@@ -13,7 +13,7 @@
 npm run dev
 ```
 
-3. 浏览器访问 <http://localhost:3000>。
+3. 浏览器访问 [<http://localhost:3000>](https://github.com/Montgomery0612/ai-assessment-platform-)。
 
 > 本文件夹已自带 `node_modules` 依赖，通常无需再 `npm install`。若启动报错，请先执行 `npm install`。
 
