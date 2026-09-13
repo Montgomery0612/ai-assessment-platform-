@@ -1,0 +1,41 @@
+{
+  "scaleId": "ai_attitude",
+  "version": "v1",
+  "title": "对人工智能的态度与使用意愿",
+  "isExploratory": true,
+  "responseScale": {
+    "min": 1,
+    "max": 5,
+    "labels": {
+      "1": "非常不同意",
+      "2": "比较不同意",
+      "3": "不确定",
+      "4": "比较同意",
+      "5": "非常同意"
+    }
+  },
+  "subscales": [
+    { "id": "trust", "label": "对 AI 的信任", "overallPositiveDirection": "positive" },
+    { "id": "cautious_use", "label": "审慎使用", "overallPositiveDirection": "excluded" },
+    { "id": "concern", "label": "AI 担忧", "overallPositiveDirection": "reverse" },
+    { "id": "use_intent", "label": "使用意愿", "overallPositiveDirection": "positive" },
+    { "id": "social_impact", "label": "AI 社会影响看法", "overallPositiveDirection": "positive" }
+  ],
+  "overallPositiveAttitude": {
+    "method": "equal_weighted_subscale_mean",
+    "includedSubscales": ["trust", "concern", "use_intent", "social_impact"],
+    "reverseSubscales": ["concern"]
+  },
+  "items": [
+    { "id": "ai_01", "text": "在大多数情况下，我相信 AI 提供的信息或建议具有参考价值。", "subscale": "trust", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_02", "text": "当 AI 的回答涉及重要决定时，我认为应保持谨慎并进行核实。", "subscale": "cautious_use", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": false },
+    { "id": "ai_03", "text": "我担心 AI 的广泛使用会带来难以控制的负面后果。", "subscale": "concern", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_04", "text": "使用 AI 工具会让我感到不安或焦虑。", "subscale": "concern", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_05", "text": "如果条件允许，我愿意在学习、工作或日常生活中使用 AI 工具。", "subscale": "use_intent", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_06", "text": "我愿意花时间学习如何更有效地使用 AI 工具。", "subscale": "use_intent", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_07", "text": "我愿意向他人推荐适合的 AI 工具。", "subscale": "use_intent", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_08", "text": "我认为 AI 有潜力提升学习和工作的效率。", "subscale": "social_impact", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_09", "text": "我认为 AI 的发展总体上会给社会带来更多积极影响。", "subscale": "social_impact", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": true },
+    { "id": "ai_10", "text": "我认为社会在推广 AI 时应优先保障公平、隐私与人的自主性。", "subscale": "value_orientation", "reverseScoredWithinSubscale": false, "includedInOverallPositiveAttitude": false, "displayAsRawResponse": true, "scored": false }
+  ]
+}

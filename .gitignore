@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# Next.js build output
+.next/
+.open-next/
+
+# Cloudflare Wrangler local state
+.wrangler/
+cloudflare-env.d.ts
+
+# environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# legacy local data (now stored in Cloudflare D1)
+data/
+
+# logs & OS
+*.log
+.DS_Store
+Thumbs.db

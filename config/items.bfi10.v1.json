@@ -1,0 +1,35 @@
+{
+  "scaleId": "bfi10",
+  "version": "v1",
+  "title": "大五人格简版量表（BFI-10）",
+  "responseScale": {
+    "min": 1,
+    "max": 5,
+    "labels": {
+      "1": "非常不同意",
+      "2": "比较不同意",
+      "3": "不确定",
+      "4": "比较同意",
+      "5": "非常同意"
+    }
+  },
+  "dimensions": [
+    "extraversion",
+    "agreeableness",
+    "conscientiousness",
+    "neuroticism",
+    "openness"
+  ],
+  "items": [
+    { "id": "bfi_01", "text": "我认为自己是一个比较内向、沉默的人。", "dimension": "extraversion", "reverseScored": true },
+    { "id": "bfi_02", "text": "我认为自己通常信任他人。", "dimension": "agreeableness", "reverseScored": false },
+    { "id": "bfi_03", "text": "我认为自己有时比较懒散。", "dimension": "conscientiousness", "reverseScored": true },
+    { "id": "bfi_04", "text": "我认为自己比较放松，能较好地应对压力。", "dimension": "neuroticism", "reverseScored": true },
+    { "id": "bfi_05", "text": "我认为自己对艺术兴趣不多。", "dimension": "openness", "reverseScored": true },
+    { "id": "bfi_06", "text": "我认为自己外向、善于交际。", "dimension": "extraversion", "reverseScored": false },
+    { "id": "bfi_07", "text": "我认为自己容易挑别人的毛病。", "dimension": "agreeableness", "reverseScored": true },
+    { "id": "bfi_08", "text": "我认为自己做事认真、彻底。", "dimension": "conscientiousness", "reverseScored": false },
+    { "id": "bfi_09", "text": "我认为自己容易紧张。", "dimension": "neuroticism", "reverseScored": false },
+    { "id": "bfi_10", "text": "我认为自己有活跃的想象力。", "dimension": "openness", "reverseScored": false }
+  ]
+}
