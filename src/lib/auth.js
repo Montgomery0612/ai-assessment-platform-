@@ -4,8 +4,8 @@
  *
  * Credentials are read from environment variables so they can be set as
  * Cloudflare secrets / vars in production (ADMIN_EMAIL, ADMIN_PASSWORD,
- * SESSION_SECRET). The fallbacks below are for local development only — always
- * override ADMIN_PASSWORD and SESSION_SECRET before a public deployment.
+ * SESSION_SECRET). ADMIN_PASSWORD and SESSION_SECRET have no fallback — when
+ * they are not configured, login and session verification fail closed.
  *
  * NOTE: This is a minimal demo auth (plaintext credential + HMAC-signed cookie).
  * For a real deployment, replace with a proper auth system and a hashed password.
@@ -16,7 +16,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const SESSION_COOKIE_NAME = "admin_session";
 
-// Resolution order: Cloudflare env binding → process.env → local dev fallback.
+// Resolution order: Cloudflare env binding → process.env → fallback.
 function config(key, fallback) {
   try {
     const { env } = getCloudflareContext();
@@ -31,10 +31,12 @@ function adminEmail() {
   return config("ADMIN_EMAIL", "monty_2025@sjtu.edu.cn");
 }
 function adminPassword() {
-  return config("ADMIN_PASSWORD", "wzp8964");
+  // No fallback: login fails closed when the password is not configured.
+  return config("ADMIN_PASSWORD", "");
 }
 function sessionSecret() {
-  return config("SESSION_SECRET", "ai-assessment-demo-secret-2026");
+  // No fallback: session verification fails closed when the secret is not configured.
+  return config("SESSION_SECRET", "");
 }
 
 function hmac(email) {
@@ -59,7 +61,9 @@ function base64urlDecode(input) {
 }
 
 export function verifyCredentials(email, password) {
-  return email === adminEmail() && password === adminPassword();
+  const expected = adminPassword();
+  if (!expected) return false;
+  return email === adminEmail() && password === expected;
 }
 
 export function createSessionToken(email) {
@@ -68,6 +72,8 @@ export function createSessionToken(email) {
 }
 
 export function verifySessionToken(token) {
+  const secret = sessionSecret();
+  if (!secret) return false;
   if (!token || typeof token !== "string" || !token.includes(".")) return false;
   const separator = token.lastIndexOf(".");
   const payload = token.slice(0, separator);
