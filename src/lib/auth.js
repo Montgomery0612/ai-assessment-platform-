@@ -3,9 +3,11 @@
  * client component — it holds the credential and session secret.
  *
  * Credentials are read from environment variables so they can be set as
- * Cloudflare secrets / vars in production (ADMIN_EMAIL, ADMIN_PASSWORD,
- * SESSION_SECRET). ADMIN_PASSWORD and SESSION_SECRET have no fallback — when
- * they are not configured, login and session verification fail closed.
+ * Cloudflare secrets / vars in production. Multiple accounts are supported via
+ * ADMIN_ACCOUNTS (a JSON array of { email, password } objects); otherwise the
+ * single ADMIN_EMAIL / ADMIN_PASSWORD pair is used. ADMIN_PASSWORD and
+ * SESSION_SECRET have no fallback — when they are not configured, login and
+ * session verification fail closed.
  *
  * NOTE: This is a minimal demo auth (plaintext credential + HMAC-signed cookie).
  * For a real deployment, replace with a proper auth system and a hashed password.
@@ -39,6 +41,32 @@ function sessionSecret() {
   return config("SESSION_SECRET", "");
 }
 
+// Multiple accounts can be configured through ADMIN_ACCOUNTS, a JSON array of
+// { "email": "...", "password": "..." } objects. When it is missing or invalid,
+// fall back to the single ADMIN_EMAIL / ADMIN_PASSWORD pair.
+function adminAccounts() {
+  const raw = config("ADMIN_ACCOUNTS", "");
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const accounts = parsed
+          .filter((account) => account && account.email && account.password)
+          .map((account) => ({
+            email: String(account.email).trim(),
+            password: String(account.password)
+          }));
+        if (accounts.length) return accounts;
+      }
+    } catch {
+      // Invalid ADMIN_ACCOUNTS — fall through to the single-account config.
+    }
+  }
+  const email = adminEmail();
+  const password = adminPassword();
+  return email && password ? [{ email, password }] : [];
+}
+
 function hmac(email) {
   return crypto.createHmac("sha256", sessionSecret()).update(email).digest("hex");
 }
@@ -61,9 +89,11 @@ function base64urlDecode(input) {
 }
 
 export function verifyCredentials(email, password) {
-  const expected = adminPassword();
-  if (!expected) return false;
-  return email === adminEmail() && password === expected;
+  const accounts = adminAccounts();
+  if (!accounts.length) return false;
+  return accounts.some(
+    (account) => account.email === email && account.password === password
+  );
 }
 
 export function createSessionToken(email) {
@@ -86,5 +116,6 @@ export function verifySessionToken(token) {
     return false;
   }
 
-  return email === adminEmail() && signature === hmac(email);
+  if (!adminAccounts().some((account) => account.email === email)) return false;
+  return signature === hmac(email);
 }

@@ -43,10 +43,10 @@ export default function AdminLoginPage() {
           <label htmlFor="email">账号</label>
           <input
             id="email"
-            type="email"
+            type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="管理员邮箱"
+            placeholder="账号或邮箱"
             autoComplete="username"
             required
           />
