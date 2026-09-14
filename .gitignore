@@ -21,3 +21,8 @@ data/
 *.log
 .DS_Store
 Thumbs.db
+
+# LaTeX build artifacts
+*.aux
+*.out
+*.synctex.gz

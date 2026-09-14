@@ -1,0 +1,72 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\emergencystretch=3em
+\tolerance=2000
+
+\title{\bfseries AI Psychological Assessment Platform\\[0.4em]
+\large\mdseries\textit{Agentic AI Web Assessment --- Short Technical Report}}
+\author{Wang Zepeng (Montgomery)}
+\date{September 13, 2026}
+
+\begin{document}
+
+\maketitle
+
+\section*{Abstract}
+
+This is the technical report for the ``Agentic AI Web Assessment Challenge''. I used Claude Code, an agentic AI coding tool, to design, build, and deploy a web-based interactive assessment platform measuring the Big Five personality (BFI-10) and attitudes toward artificial intelligence. The platform includes informed consent, an interactive questionnaire, automated scoring, interactive result visualization, anonymous data collection, a researcher dashboard, and a pilot-feedback module, deployed on Cloudflare Workers and D1. The report summarizes the system design, the measured constructs and their rationale, the scoring logic, the technology stack, the AI-assisted development process, the pilot-evaluation plan, problems encountered, mistakes made by the AI and how they were corrected, and directions for future improvement.
+
+\section{What I Built}
+
+I built a web application called ``AI Psychological Assessment Platform'', publicly deployed at \url{https://ai-assessment-platform.yangyannan2005.workers.dev}. It has six modules: (1) an introduction and informed-consent page stating the purpose, the data collected, how the data will be used, and a ``for educational/research exploration, not a clinical diagnosis'' disclaimer; (2) an interactive questionnaire with the BFI-10 Big Five short scale (10 items) and an AI-attitude scale (10 items), both on a 5-point Likert scale; (3) an automated scoring system that standardizes raw responses to 0--100; (4) an interactive results page showing an overall positive-attitude score, a personality radar chart, per-dimension bar charts, and written interpretation; (5) data collection and a researcher dashboard showing participant count, score distributions, dimension means, item-level distributions, Cronbach's $\alpha$, and correlation matrices; and (6) a pilot-feedback module collecting four ratings and two open-ended comments. Source code is hosted at \url{https://github.com/Montgomery0612/ai-assessment-platform-}.
+
+\section{Constructs Measured}
+
+The platform measures two kinds of constructs. Personality is measured with the Big Five framework (extraversion, agreeableness, conscientiousness, neuroticism, openness) using the BFI-10 short scale, two items per dimension. Attitude is measured as ``attitude toward artificial intelligence'' across five subscales: trust in AI, cautious use, AI concern (reverse-scored), use intention, and perceived social impact of AI; one item on value orientation is descriptive and excluded from scoring.
+
+\section{Why These Constructs}
+
+I chose the Big Five because it is one of the most mature and widely validated personality models, and the BFI-10 is an established brief instrument suitable for a fast pilot. I chose ``attitude toward AI'' because AI tools are increasingly pervasive in study and work; measuring trust, concern, and use intention is both timely and convenient for exploring relationships with personality traits (for example, openness and AI acceptance).
+
+\section{How Scoring Works}
+
+All items use a 1--5 Likert scale. Negatively worded items are reverse-scored by subtracting the raw value from 6. Each personality dimension is the mean of its two (reverse-scored) items, linearly transformed to 0--100 via $((\mathrm{mean}-1)/4)\times 100$. AI subscales follow the same procedure; the ``concern'' subscale is reversed so that higher scores mean less concern. The overall positive-attitude score is the mean of trust, concern (reversed), use intention, and social impact, then standardized. Cautious use is reported separately as a descriptive indicator and excluded from the overall score.
+
+\section{Technologies Used}
+
+The front end and full stack use Next.js 16 (App Router) and React 19 on the Node.js runtime. The backend is hosted on Cloudflare Workers (via the OpenNext adapter), with data stored in Cloudflare D1 (SQLite). Wrangler CLI is used for deployment and resource management. Local verification uses Node's built-in tests and scripts. Charts (radar and bar) are hand-written SVG, requiring no extra charting library.
+
+\section{How I Used Agentic AI}
+
+The entire development was done with Claude Code. I decomposed the open-ended problem into subtasks: requirements and data-model design, scale configuration, scoring logic, front-end pages, result visualization, the admin dashboard, and deployment/debugging. The AI generated most of the code, while I reviewed, tested, and corrected it. Key interactions include designing the scoring functions (standardization and reverse scoring), migrating local JSONL storage to Cloudflare D1, using \texttt{wrangler tail} to locate a D1 table-creation error, and fixing the OpenNext deployment configuration. Specific prompts and corrections are detailed in Sections 9--10.
+
+\section{Pilot Evaluation}
+
+The platform is publicly deployed. To verify end-to-end correctness, I first ran 12 simulated responses as a system-level check, confirming that submission, scoring, result display, storage, statistical aggregation, and feedback all work. The formal pilot will invite at least 10 independent participants (classmates, friends, etc.) to complete the assessment and give feedback. I will then analyze: (1) whether participants could complete the assessment; (2) whether items were understandable; (3) whether usability problems occurred; (4) whether scoring behaved as expected; (5) whether unusual response patterns appeared; and (6) what users liked or disliked. Note: at the time of writing, real pilot data has not yet been collected; this section will be completed with concrete findings once real participant data is available.
+
+\section{Problems Encountered}
+
+The main problems were: (1) Cloudflare Workers has no persistent filesystem, so the original local JSONL storage could not be used and had to be migrated to D1; (2) the workers.dev domain is hard to reach directly from mainland-China networks; (3) the Workers free tier has limited CPU time, so running Next.js server-side rendering requires a paid plan; and (4) OpenNext has limited Windows support. These were handled by moving to D1, upgrading to a paid plan, and documenting the access limitations.
+
+\section{Mistakes the AI Made}
+
+The AI made several mistakes that I identified and corrected: (1) the OpenNext config file was misnamed \texttt{open-next.config.mjs} instead of the required \texttt{open-next.config.ts}; (2) \texttt{wrangler.jsonc} was missing required fields (\texttt{main}, \texttt{assets}, \texttt{global\_fetch\_strictly\_public}); (3) it called D1's \texttt{exec()} with multiple semicolon-separated \texttt{CREATE TABLE} statements, causing a \texttt{SQLITE\_ERROR}, fixed by running one \texttt{prepare().run()} per statement; (4) it used Node-specific APIs (\texttt{fs}, \texttt{Buffer} base64url, \texttt{crypto} randomUUID) that are unavailable on Workers, replaced with portable implementations; (5) it deployed before registering a workers.dev subdomain; and (6) it hard-coded a fallback admin password in source, a security concern.
+
+\section{How I Verified and Corrected}
+
+I verified correctness through multiple layers: (1) \texttt{node --check} syntax checks; (2) a successful \texttt{next build}; (3) the existing scoring unit tests (\texttt{test/scoring.test.js}); (4) end-to-end API tests --- submit, read result, submit feedback, aggregate statistics --- checking each response; and (5) \texttt{wrangler tail} to capture live logs and locate the 500 error (the D1 table-creation bug), then fixing it. After each fix I redeployed and re-tested. Scoring was also checked by hand (an all-3 response should yield 50) to confirm correctness.
+
+\section{If I Had Another Week}
+
+With another week I would: (1) collect real participant data and complete reliability, validity, and correlation analyses; (2) bind a custom domain or switch to a host directly reachable for mainland-China users; (3) replace the demo authentication with hashed passwords and a proper auth system; (4) improve mobile responsiveness and accessibility; and (5) enrich result interpretation (for example, cross-dimension comparison and personalized suggestions), iterating on item wording and interaction based on pilot feedback.
+
+\end{document}

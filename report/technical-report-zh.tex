@@ -1,0 +1,71 @@
+\documentclass[11pt,a4paper]{ctexart}
+
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\emergencystretch=3em
+\tolerance=2000
+
+\title{\bfseries AI 心理评估平台技术报告}
+\author{王泽芃}
+\date{2026 年 9 月 13 日}
+
+\begin{document}
+
+\maketitle
+
+\section*{摘要}
+
+本文是「Agentic AI Web Assessment Challenge」的技术报告。我使用 Claude Code（一种 agentic AI 编码工具）设计、构建并部署了一个基于 Web 的交互式心理评估平台，用于测量大五人格（BFI-10 简版）与对人工智能的态度。平台包含知情同意、交互式问卷、自动计分、交互式结果可视化、匿名数据收集、研究者仪表盘与试测反馈模块，并已部署在 Cloudflare Workers 与 D1 上。报告概述了系统设计、测量构念与选择理由、计分逻辑、技术栈、AI 辅助开发过程、试测评估计划、遇到的问题、AI 的错误与纠正方式，以及后续改进方向。
+
+\section{构建了什么}
+
+我构建了一个名为「AI 心理评估平台」的 Web 应用，公开部署于 \url{https://ai-assessment-platform.yangyannan2005.workers.dev}。平台包含六个模块：(1) 介绍与知情同意页，说明评估目的、收集的信息、信息用途以及「仅供教育/研究探索、非临床诊断」的声明；(2) 交互式问卷，包含大五人格简版量表（BFI-10，10 题）与对人工智能的态度量表（10 题），均采用 5 点李克特量表；(3) 自动计分系统，将原始作答标准化为 0--100 分；(4) 交互式结果页，展示总体积极态度得分、人格剖面雷达图、各维度条形图与文字解释；(5) 数据收集与研究者仪表盘，展示参与者数量、分数分布、各维度均值、题目层面分布、克隆巴赫 $\alpha$ 系数与相关矩阵；(6) 试测反馈模块，收集 4 项评分与两条开放性意见。源代码托管于 \url{https://github.com/Montgomery0612/ai-assessment-platform-}。
+
+\section{测量的构念}
+
+平台测量两类构念。人格维度采用大五人格框架（外向性、宜人性、尽责性、神经质、开放性），通过 BFI-10 简版量表测量，每个维度 2 题。态度维度测量「对人工智能的态度」，包含五个分量表：对 AI 的信任、审慎使用、AI 担忧（反向计分）、使用意愿、AI 社会影响看法；其中第 10 题（价值取向）为描述性题目，不计入总分。
+
+\section{为什么选择这些构念}
+
+选择大五人格，是因为它是心理学中成熟且被广泛验证的人格模型之一，BFI-10 是公认的简短测量工具，适合在试测中快速施测。选择「对 AI 的态度」，是因为 AI 工具在当前学习与工作中日益普及，测量使用者对 AI 的信任、担忧与使用意愿既有现实意义，也便于与人格特质做关联分析（例如开放性与 AI 接受度的关系）。
+
+\section{计分系统如何工作}
+
+所有题目采用 1--5 分李克特量表。反向计分的题目先用 $6$ 减去原始分进行翻转。每个人格维度取该维度 2 题（翻转后）的平均分 $\bar{x}$，再通过 $((\bar{x}-1)/4)\times 100$ 线性变换为 0--100 分。AI 态度分量表同理：先对分量表内题目求均值，其中「AI 担忧」分量表反向（分数越高代表担忧越少），再标准化为 0--100。总体积极态度为信任、担忧（反向）、使用意愿、社会影响四个分量表均值的平均，再标准化。审慎使用作为描述性指标单独报告，不计入总体。
+
+\section{使用的技术}
+
+前端与全栈使用 Next.js 16（App Router）与 React 19，Node.js 运行时。后端通过 Cloudflare Workers 托管（借助 OpenNext 适配器），数据存储使用 Cloudflare D1（SQLite）。部署与资源管理使用 wrangler CLI。本地验证使用 Node 内置测试与脚本。图表（雷达图与条形图）为手写 SVG，无需额外图表库。
+
+\section{如何使用 Agentic AI}
+
+整个开发过程使用 Claude Code 完成。我将开放性问题分解为若干子任务：需求与数据模型设计、量表配置、计分逻辑、前端页面、结果可视化、管理员仪表盘、部署与调试。AI 生成了大部分代码，我负责审查、测试与纠正。关键交互包括：设计计分函数（标准分与反向计分）、将本地 JSONL 存储迁移到 Cloudflare D1、用 \texttt{wrangler tail} 定位 D1 建表语句错误、修复 OpenNext 部署配置。具体的关键提示与纠错过程见第 9--10 节。
+
+\section{试测评估}
+
+平台已公开部署。为验证系统的端到端正确性，我先用 12 份模拟作答完成了系统级验证，确认提交、计分、结果展示、数据入库、统计聚合与反馈链路均正常。正式试测计划邀请至少 10 名独立被试（同学、朋友等）完成测评并填写反馈。届时将分析：(1) 被试能否顺利完成；(2) 题目是否易于理解；(3) 是否存在可用性问题；(4) 计分是否符合预期；(5) 是否出现异常作答模式；(6) 用户喜欢与不喜欢之处。需要说明：截至本报告撰写时，真实被试数据尚未收集，本节将在收集真实数据后补充具体结论。
+
+\section{遇到的问题}
+
+主要问题包括：(1) Cloudflare Workers 没有持久文件系统，原来的 JSONL 本地存储无法使用，需迁移到 D1；(2) Cloudflare 的 workers.dev 域名在中国大陆网络下难以直连；(3) Workers 免费版 CPU 时间有限，需控制服务端渲染的资源占用；(4) OpenNext 对 Windows 的支持有限。这些问题分别通过改用 D1、将资源占用控制在免费额度内（免费套餐已足够，无需升级）、并在报告中说明访问限制等方式处理。
+
+\section{AI 犯的错误}
+
+AI 在开发中犯了若干错误，由我发现并纠正：(1) OpenNext 配置文件误命名为 \texttt{open-next.config.mjs}，实际要求 \texttt{open-next.config.ts}；(2) \texttt{wrangler.jsonc} 缺少 \texttt{main}、\texttt{assets} 与 \texttt{global\_fetch\_strictly\_public} 等必需字段；(3) 用 D1 的 \texttt{exec()} 一次执行多条分号分隔的建表 SQL，导致 \texttt{SQLITE\_ERROR}，改为逐条 \texttt{prepare().run()}；(4) 使用了 Node 专属 API（\texttt{fs}、\texttt{Buffer} 的 base64url、\texttt{crypto} 的 randomUUID），在 Workers 上不可用，需改为可移植实现；(5) 首次部署时未注册 workers.dev 子域；(6) 在源码中硬编码了管理员回退密码，存在安全隐患。
+
+\section{如何验证与纠正}
+
+我通过多层验证保证正确性：(1) 语法检查 \texttt{node --check}；(2) 编译检查 \texttt{next build} 成功；(3) 运行既有计分单元测试 \texttt{test/scoring.test.js}；(4) 端到端 API 测试：提交、读取结果、提交反馈、统计聚合，逐一核对返回；(5) 用 \texttt{wrangler tail} 抓取线上日志定位 500 错误（D1 建表语句错误）并修复。每次修复后重新部署并复测。计分逻辑也通过手工核对（全部作答 3 分应得 50 分）确认正确。
+
+\section{如果还有一周}
+
+如果还有一周，我会：(1) 收集真实被试数据并完成信度、效度与相关分析；(2) 为大陆用户绑定自定义域名或换用可直连的托管；(3) 用哈希密码与更完善的身份认证替代当前的演示认证；(4) 增加移动端适配与无障碍支持；(5) 丰富结果解释（如维度间比较与个性化建议），并基于试测反馈迭代问卷措辞与交互。
+
+\end{document}
